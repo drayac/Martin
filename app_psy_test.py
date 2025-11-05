@@ -671,11 +671,11 @@ st.markdown(f"""
             text-align: center !important;
             font-size: 1rem !important;
             padding: 0 1rem !important;
-            margin-top: -8rem !important;
-            margin-bottom: 0rem !important;
+            margin-top: -6rem !important;
+            margin-bottom: -0.5rem !important;
             padding-right: 1rem !important;
             position: relative !important;
-            top: -2rem !important;
+            top: -1rem !important;
         }}
         
         /* EXTREME mobile compression - target everything */
@@ -706,6 +706,12 @@ st.markdown(f"""
             gap: 0 !important;
             padding: 0 !important;
             margin: 0 !important;
+        }}
+        
+        /* Bring prompt closer to intro message */
+        .stTextInput {{
+            margin-top: -1rem !important;
+            padding-top: 0 !important;
         }}
     }}
     </style>
