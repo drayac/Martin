@@ -302,10 +302,12 @@ st.markdown(f"""
             display: none !important;
         }}
         
-        /* Mobile language button adjustment */
+        /* Mobile language button adjustment - top right corner */
         .language-toggle {{
-            top: 10px !important;
-            right: 10px !important;
+            position: fixed !important;
+            top: 5px !important;
+            right: 5px !important;
+            z-index: 1000 !important;
         }}
         
         .language-toggle button {{
@@ -332,10 +334,10 @@ st.markdown(f"""
             font-size: 0.9rem !important;
         }}
         
-        /* Drastically reduce spacing on mobile */
+        /* Drastically reduce spacing on mobile - reduced by half */
         .mobile-spacing {{
             display: block !important;
-            margin-top: 1rem !important;
+            margin-top: 0.5rem !important;
         }}
         
         .mobile-spacing br {{
