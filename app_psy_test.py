@@ -297,21 +297,14 @@ st.markdown(f"""
             max-width: 100% !important;
         }}
         
-        /* Mobile title adjustment - fix cut-off */
+        /* Mobile title adjustment - hide completely */
         .main-title {{
-            font-size: 1rem !important;
-            text-align: center !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            top: 15px !important;
-            width: 90% !important;
-            white-space: nowrap !important;
-            overflow: visible !important;
+            display: none !important;
         }}
         
         /* Mobile language button adjustment */
         .language-toggle {{
-            top: 50px !important;
+            top: 10px !important;
             right: 10px !important;
         }}
         
@@ -339,14 +332,14 @@ st.markdown(f"""
             font-size: 0.9rem !important;
         }}
         
-        /* Reduce spacing on mobile */
+        /* Drastically reduce spacing on mobile */
         .mobile-spacing {{
             display: block !important;
-            margin-top: 3rem !important;
+            margin-top: 1rem !important;
         }}
         
         .mobile-spacing br {{
-            display: none !important;
+            display: block !important;
         }}
         
         /* Hide desktop spacing on mobile */
@@ -593,7 +586,7 @@ st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_htm
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="mobile-spacing">', unsafe_allow_html=True)
-st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Introductory message - positioned on the right and lower
