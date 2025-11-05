@@ -367,9 +367,9 @@ st.markdown(f"""
         /* ULTRA-compact spacing on mobile - ZERO or negative spacing */
         .mobile-spacing {{
             display: block !important;
-            margin-top: -2rem !important;
+            margin-top: -4rem !important;
             padding-top: 0 !important;
-            margin-bottom: -1rem !important;
+            margin-bottom: -2rem !important;
         }}
         
         .mobile-spacing br {{
@@ -378,8 +378,17 @@ st.markdown(f"""
         
         /* Ultra-compact content container on mobile */
         .main .block-container {{
-            padding-top: 0.5rem !important;
-            margin-top: -1rem !important;
+            padding-top: 0rem !important;
+            margin-top: -2rem !important;
+        }}
+        
+        /* Mobile intro message - much closer to top */
+        .intro-message {{
+            text-align: center !important;
+            font-size: 1rem !important;
+            padding: 0 1rem !important;
+            margin-top: -2rem !important;
+            margin-bottom: 0.5rem !important;
         }}
         
         /* Hide desktop spacing on mobile */
@@ -411,12 +420,12 @@ st.markdown(f"""
     
     #MainMenu, footer, header {{ visibility: hidden; }}
     .main-title {{ 
-        color: var(--text-color) !important; font-size: 1.8rem !important; font-weight: 100 !important;
-        text-align: left !important; margin: 0 !important; padding: 0.3rem 1rem !important;
+        color: var(--text-color) !important; font-size: 2.4rem !important; font-weight: 200 !important;
+        text-align: left !important; margin: 0 !important; padding: 0.5rem 1rem !important;
         background: linear-gradient(135deg, var(--primary-color) 0%, #e0e0e0 100%) !important;
         -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important;
         position: absolute !important;
-        top: 5px !important;
+        top: -10px !important;
         left: 5px !important;
         z-index: 10 !important;
         text-transform: uppercase !important;
@@ -570,7 +579,7 @@ cleanup_guest_users()
 # Language texts
 texts = {
     "en": {
-        "title": "Martin - your AI psychologist",
+        "title": "Martin - Your AI Psychologist",
         "intro": "Hi there, please have a seat. What brings you in today?",
         "placeholder": "Enter your message here...",
         "wrap_up": "WRAP UP SESSION",
@@ -602,27 +611,35 @@ texts = {
 # Get current language texts
 current_texts = texts[st.session_state.language]
 
-# Main page title and language toggle
-title_col, lang_col = st.columns([6, 1])
+# Create language button with inline positioning - completely out of document flow
+button_text = "🇫🇷 FR" if st.session_state.language == "en" else "🇺🇸 EN"
+st.markdown(f"""
+<div style="position: fixed; top: 15px; right: 15px; z-index: 99999; background: rgba(255, 255, 255, 0.9); padding: 5px; border-radius: 8px; border: 1px solid #ccc; width: auto; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+    <form action="" method="get" style="margin: 0; padding: 0;">
+        <button type="submit" name="lang_toggle" value="1" style="background: #f8f9fa; color: #333; border: 1px solid #ddd; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin: 0; transition: background-color 0.2s ease;">
+            {button_text}
+        </button>
+    </form>
+</div>
+""", unsafe_allow_html=True)
 
-with title_col:
-    st.markdown(f"""
-        <div class="main-title">
-            {current_texts["title"]}
-        </div>
-        """, unsafe_allow_html=True)
+# Handle language toggle from form submission
+if st.query_params.get("lang_toggle"):
+    st.session_state.language = "fr" if st.session_state.language == "en" else "en"
+    st.query_params.clear()
+    st.rerun()
 
-with lang_col:
-    st.markdown('<div class="language-toggle" style="position: fixed !important; top: 10px !important; right: 10px !important; z-index: 99999 !important; background-color: red !important; padding: 5px !important; border-radius: 5px !important;">', unsafe_allow_html=True)
-    if st.button(current_texts["language_button"], key="lang_toggle"):
-        st.session_state.language = "fr" if st.session_state.language == "en" else "en"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+# Main page title - should stay in original position
+st.markdown(f"""
+    <div class="main-title">
+        {current_texts["title"]}
+    </div>
+    """, unsafe_allow_html=True)
 
 # Chat interface
-# Add spacing to push content down towards the bottom
+# Add spacing to push content down towards the bottom - MORE spacing for desktop
 st.markdown('<div class="desktop-spacing">', unsafe_allow_html=True)
-st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
+st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="mobile-spacing">', unsafe_allow_html=True)
@@ -630,7 +647,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 # Introductory message - positioned on the right and lower
 st.markdown(f"""
-    <div class="intro-message" style="text-align: right; font-size: 1.2rem; margin-bottom: 1rem; color: #ffffff; padding-right: 3rem; animation: fadeIn 1s ease-in;">
+    <div class="intro-message" style="text-align: right; font-size: 1.2rem; margin-bottom: 0.5rem; color: #ffffff; padding-right: 3rem; animation: fadeIn 1s ease-in;">
         {current_texts["intro"]}
     </div>
     """, unsafe_allow_html=True)
