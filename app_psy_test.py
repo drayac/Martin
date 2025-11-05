@@ -367,9 +367,9 @@ st.markdown(f"""
         /* ULTRA-compact spacing on mobile - ZERO or negative spacing */
         .mobile-spacing {{
             display: block !important;
-            margin-top: -4rem !important;
+            margin-top: -6rem !important;
             padding-top: 0 !important;
-            margin-bottom: -2rem !important;
+            margin-bottom: -4rem !important;
         }}
         
         .mobile-spacing br {{
@@ -378,6 +378,13 @@ st.markdown(f"""
         
         /* Ultra-compact content container on mobile */
         .main .block-container {{
+            padding-top: 0rem !important;
+            margin-top: -4rem !important;
+            padding-bottom: 0rem !important;
+        }}
+        
+        /* Force mobile content to start from very top */
+        .stApp > div:first-child {{
             padding-top: 0rem !important;
             margin-top: -2rem !important;
         }}
@@ -657,9 +664,21 @@ st.markdown(f"""
             text-align: center !important;
             font-size: 1rem !important;
             padding: 0 1rem !important;
-            margin-top: -3rem !important;
-            margin-bottom: 0.5rem !important;
+            margin-top: -6rem !important;
+            margin-bottom: 0.2rem !important;
             padding-right: 1rem !important;
+        }}
+        
+        /* Force entire app content up on mobile */
+        .stApp {{
+            padding-top: 0 !important;
+            margin-top: 0 !important;
+        }}
+        
+        /* Reduce all vertical spacing on mobile */
+        .main {{
+            padding-top: 0 !important;
+            margin-top: -3rem !important;
         }}
     }}
     </style>
