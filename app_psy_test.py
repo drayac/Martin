@@ -364,12 +364,13 @@ st.markdown(f"""
             font-size: 0.9rem !important;
         }}
         
-        /* ULTRA-compact spacing on mobile - ZERO or negative spacing */
+        /* ULTRA-compact spacing on mobile - MAXIMUM compression */
         .mobile-spacing {{
             display: block !important;
-            margin-top: -6rem !important;
+            margin-top: -8rem !important;
             padding-top: 0 !important;
-            margin-bottom: -4rem !important;
+            margin-bottom: -6rem !important;
+            height: 0 !important;
         }}
         
         .mobile-spacing br {{
@@ -379,14 +380,20 @@ st.markdown(f"""
         /* Ultra-compact content container on mobile */
         .main .block-container {{
             padding-top: 0rem !important;
-            margin-top: -4rem !important;
+            margin-top: -6rem !important;
             padding-bottom: 0rem !important;
         }}
         
         /* Force mobile content to start from very top */
         .stApp > div:first-child {{
             padding-top: 0rem !important;
-            margin-top: -2rem !important;
+            margin-top: -4rem !important;
+        }}
+        
+        /* Remove all Streamlit default spacing on mobile */
+        section[data-testid="stSidebar"] ~ div {{
+            padding-top: 0 !important;
+            margin-top: -3rem !important;
         }}
         
         /* Mobile intro message - much closer to top */
@@ -664,21 +671,41 @@ st.markdown(f"""
             text-align: center !important;
             font-size: 1rem !important;
             padding: 0 1rem !important;
-            margin-top: -6rem !important;
-            margin-bottom: 0.2rem !important;
+            margin-top: -8rem !important;
+            margin-bottom: 0rem !important;
             padding-right: 1rem !important;
+            position: relative !important;
+            top: -2rem !important;
         }}
         
-        /* Force entire app content up on mobile */
+        /* EXTREME mobile compression - target everything */
         .stApp {{
             padding-top: 0 !important;
-            margin-top: 0 !important;
+            margin-top: -3rem !important;
         }}
         
-        /* Reduce all vertical spacing on mobile */
         .main {{
             padding-top: 0 !important;
-            margin-top: -3rem !important;
+            margin-top: -5rem !important;
+        }}
+        
+        .main .block-container {{
+            padding-top: 0 !important;
+            margin-top: -6rem !important;
+            padding-bottom: 0 !important;
+        }}
+        
+        /* Target Streamlit's default spacing */
+        .stApp > div {{
+            padding-top: 0 !important;
+            margin-top: -2rem !important;
+        }}
+        
+        /* Remove all default margins on mobile */
+        div[data-testid="stVerticalBlock"] {{
+            gap: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
         }}
     }}
     </style>
