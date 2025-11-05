@@ -650,6 +650,19 @@ st.markdown(f"""
     <div class="intro-message" style="text-align: right; font-size: 1.2rem; margin-bottom: 0.5rem; color: #ffffff; padding-right: 3rem; animation: fadeIn 1s ease-in;">
         {current_texts["intro"]}
     </div>
+    
+    <style>
+    @media (max-width: 768px) {{
+        .intro-message {{
+            text-align: center !important;
+            font-size: 1rem !important;
+            padding: 0 1rem !important;
+            margin-top: -3rem !important;
+            margin-bottom: 0.5rem !important;
+            padding-right: 1rem !important;
+        }}
+    }}
+    </style>
     """, unsafe_allow_html=True)
 
 # User input - simple and clean approach
