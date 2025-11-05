@@ -281,8 +281,8 @@ st.markdown(f"""
     /* Mobile responsiveness */
     @media (max-width: 768px) {{
         .stApp {{
-            background-size: 90% !important;
-            background-position: center 80px !important;
+            background-size: 120% !important;
+            background-position: center 60px !important;
         }}
         
         /* Hide sidebar on mobile */
@@ -297,13 +297,28 @@ st.markdown(f"""
             max-width: 100% !important;
         }}
         
-        /* Mobile title adjustment */
+        /* Mobile title adjustment - fix cut-off */
         .main-title {{
-            font-size: 1.2rem !important;
+            font-size: 1rem !important;
             text-align: center !important;
             left: 50% !important;
             transform: translateX(-50%) !important;
-            top: 10px !important;
+            top: 15px !important;
+            width: 90% !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+        }}
+        
+        /* Mobile language button adjustment */
+        .language-toggle {{
+            top: 50px !important;
+            right: 10px !important;
+        }}
+        
+        .language-toggle button {{
+            font-size: 0.7rem !important;
+            padding: 0.2rem 0.5rem !important;
+            min-height: 1.8rem !important;
         }}
         
         /* Mobile intro message */
@@ -323,6 +338,30 @@ st.markdown(f"""
             min-height: 44px !important; /* Touch-friendly size */
             font-size: 0.9rem !important;
         }}
+        
+        /* Reduce spacing on mobile */
+        .mobile-spacing {{
+            display: block !important;
+            margin-top: 3rem !important;
+        }}
+        
+        .mobile-spacing br {{
+            display: none !important;
+        }}
+        
+        /* Hide desktop spacing on mobile */
+        .desktop-spacing {{
+            display: none !important;
+        }}
+    }}
+    
+    /* Desktop spacing - hidden on mobile */
+    .mobile-spacing {{
+        display: none;
+    }}
+    
+    .desktop-spacing {{
+        display: block;
     }}
     
     /* Black margin on top */
@@ -549,7 +588,13 @@ with lang_col:
 
 # Chat interface
 # Add spacing to push content down towards the bottom
-st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
+st.markdown('<div class="desktop-spacing">', unsafe_allow_html=True)
+st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('<div class="mobile-spacing">', unsafe_allow_html=True)
+st.markdown("<br><br><br><br><br>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
 # Introductory message - positioned on the right and lower
 st.markdown(f"""
