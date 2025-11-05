@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import json
 import hashlib
 import datetime
@@ -98,16 +99,46 @@ def test_groq_api():
         return False, f"Connection Error: {str(e)[:50]}"
 
 def format_thinking_tags(text):
-    """Format text between <think> and </think> tags in italic with a note"""
+    """Remove text between <think> and </think> tags completely and clean up any CSS code"""
     import re
     
-    def replace_thinking(match):
-        thinking_content = match.group(1).strip()
-        return f'<em>{thinking_content}</em> <em>(Model\'s thoughts)</em>'
+    # Remove <think>content</think> completely for cleaner display
+    # Use re.DOTALL to handle multiline content and re.IGNORECASE for robustness
+    formatted_text = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL | re.IGNORECASE)
     
-    # Replace <think>content</think> with HTML italic formatting and note
-    formatted_text = re.sub(r'<think>(.*?)</think>', replace_thinking, text, flags=re.DOTALL)
-    return formatted_text
+    # Also handle any remaining partial tags
+    formatted_text = re.sub(r'<think.*?>', '', formatted_text, flags=re.DOTALL | re.IGNORECASE)
+    formatted_text = re.sub(r'</think.*?>', '', formatted_text, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Remove any CSS code blocks that might appear
+    formatted_text = re.sub(r'<style>.*?</style>', '', formatted_text, flags=re.DOTALL | re.IGNORECASE)
+    
+    # Remove any standalone CSS-like content (lines that look like CSS)
+    lines = formatted_text.split('\n')
+    clean_lines = []
+    skip_css = False
+    
+    for line in lines:
+        line_stripped = line.strip()
+        # Skip lines that look like CSS
+        if (line_stripped.startswith('@media') or 
+            line_stripped.startswith('.') and '{' in line_stripped or
+            line_stripped.endswith('{') or 
+            line_stripped.endswith('}') or
+            '!important' in line_stripped or
+            line_stripped.startswith('/*') or
+            line_stripped.endswith('*/')):
+            skip_css = True
+            continue
+        elif line_stripped == '' and skip_css:
+            continue
+        else:
+            skip_css = False
+            clean_lines.append(line)
+    
+    formatted_text = '\n'.join(clean_lines)
+    
+    return formatted_text.strip()
 
 def get_base64_image(image_path):
     """Convert image to base64 for CSS background"""
@@ -244,6 +275,20 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# Add sound functionality on app opening
+# Simple sound without session state complexity
+def get_sound_base64():
+    try:
+        sound_path = os.path.join(os.path.dirname(__file__), "sounds", "fire1.mp3")
+        if os.path.exists(sound_path):
+            with open(sound_path, "rb") as f:
+                data = f.read()
+            return base64.b64encode(data).decode()
+        else:
+            return None
+    except Exception as e:
+        return None
 
 # Get background image as base64
 # Use path relative to this script's location
@@ -603,7 +648,7 @@ texts = {
         "you": "You",
         "martin": "Martin",
         "date": "Date",
-        "session": "Session",
+        "session": "Q/A",
         "language_button": "🇫🇷 Français"
     },
     "fr": {
@@ -617,7 +662,7 @@ texts = {
         "you": "Vous",
         "martin": "Martin",
         "date": "Date",
-        "session": "Session",
+        "session": "Q/A",
         "language_button": "🇺🇸 English"
     }
 }
@@ -659,63 +704,116 @@ st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('<div class="mobile-spacing">', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Introductory message - positioned on the right and lower
-st.markdown(f"""
-    <div class="intro-message" style="text-align: right; font-size: 1.2rem; margin-bottom: 0.5rem; color: #ffffff; padding-right: 3rem; animation: fadeIn 1s ease-in;">
-        {current_texts["intro"]}
-    </div>
+# Dynamic message area - shows intro or Martin's latest response
+# Get the latest Martin response if available
+latest_martin_response = None
+if st.session_state.chat_history:
+    # Find the last assistant message
+    for message in reversed(st.session_state.chat_history):
+        if message["role"] == "assistant":
+            latest_martin_response = message["content"]
+            break
+
+# Display either intro message or Martin's response
+if latest_martin_response:
+    # Display Martin's response with greyish box
+    st.markdown(f"""
+        <div class="martin-response-box" style="
+            text-align: left; 
+            font-size: 1.1rem; 
+            margin-bottom: 1rem; 
+            color: #ffffff; 
+            padding: 1rem 1.5rem; 
+            background: rgba(100, 100, 100, 0.3);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1s ease-in;
+            margin: 0 1rem 1.5rem 1rem;
+            max-width: 90%;
+        ">
+            <strong>Martin:</strong> {format_thinking_tags(latest_martin_response)}
+        </div>
+        """, unsafe_allow_html=True)
     
-    <style>
-    @media (max-width: 768px) {{
-        .intro-message {{
-            text-align: center !important;
-            font-size: 1rem !important;
-            padding: 0 1rem !important;
-            margin-top: -6rem !important;
-            margin-bottom: -0.5rem !important;
-            padding-right: 1rem !important;
-            position: relative !important;
-            top: -1rem !important;
-        }}
+    # Add mobile-specific CSS separately to avoid f-string issues
+    st.markdown("""
+        <style>
+        @media (max-width: 768px) {
+            .martin-response-box {
+                text-align: left !important;
+                font-size: 1rem !important;
+                padding: 0.8rem 1rem !important;
+                margin: 0 0.5rem 1rem 0.5rem !important;
+                margin-top: -6rem !important;
+                position: relative !important;
+                top: -1rem !important;
+                max-width: 95% !important;
+            }
+        }
         
         /* EXTREME mobile compression - target everything */
-        .stApp {{
-            padding-top: 0 !important;
-            margin-top: -3rem !important;
-        }}
+        @media (max-width: 768px) {
+            .stApp {
+                padding-top: 0 !important;
+                margin-top: -3rem !important;
+            }
+            
+            .main {
+                padding-top: 0 !important;
+                margin-top: -5rem !important;
+            }
+            
+            .main .block-container {
+                padding-top: 0 !important;
+                margin-top: -6rem !important;
+                padding-bottom: 0 !important;
+            }
+            
+            /* Target Streamlit's default spacing */
+            .stApp > div {
+                padding-top: 0 !important;
+                margin-top: -2rem !important;
+            }
+            
+            /* Remove all default margins on mobile */
+            div[data-testid="stVerticalBlock"] {
+                gap: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            
+            /* Bring prompt closer to message */
+            .stTextInput {
+                margin-top: -1rem !important;
+                padding-top: 0 !important;
+            }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+else:
+    # Display intro message
+    st.markdown(f"""
+        <div class="intro-message" style="text-align: right; font-size: 1.2rem; margin-bottom: 0.5rem; color: #ffffff; padding-right: 3rem; animation: fadeIn 1s ease-in;">
+            {current_texts["intro"]}
+        </div>
         
-        .main {{
-            padding-top: 0 !important;
-            margin-top: -5rem !important;
+        <style>
+        @media (max-width: 768px) {{
+            .intro-message {{
+                text-align: center !important;
+                font-size: 1rem !important;
+                padding: 0 1rem !important;
+                margin-top: -6rem !important;
+                margin-bottom: -0.5rem !important;
+                padding-right: 1rem !important;
+                position: relative !important;
+                top: -1rem !important;
+            }}
         }}
-        
-        .main .block-container {{
-            padding-top: 0 !important;
-            margin-top: -6rem !important;
-            padding-bottom: 0 !important;
-        }}
-        
-        /* Target Streamlit's default spacing */
-        .stApp > div {{
-            padding-top: 0 !important;
-            margin-top: -2rem !important;
-        }}
-        
-        /* Remove all default margins on mobile */
-        div[data-testid="stVerticalBlock"] {{
-            gap: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }}
-        
-        /* Bring prompt closer to intro message */
-        .stTextInput {{
-            margin-top: -1rem !important;
-            padding-top: 0 !important;
-        }}
-    }}
-    </style>
-    """, unsafe_allow_html=True)
+        </style>
+        """, unsafe_allow_html=True)
 
 # User input - simple and clean approach
 # Main input row
@@ -770,18 +868,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Display only the latest conversation - immediately below the form
-if st.session_state.chat_history:
-    # Find the last assistant response
-    messages = st.session_state.chat_history
-    if len(messages) >= 1:
-        last_assistant = messages[-1] if messages[-1]["role"] == "assistant" else None
-        
-        if last_assistant:
-            with st.chat_message("assistant"):
-                # Format the assistant response to handle <think> tags
-                formatted_response = format_thinking_tags(last_assistant["content"])
-                st.markdown(formatted_response, unsafe_allow_html=True)
+# Display only the latest conversation - NOW MOVED TO TOP AREA
+# Responses now appear in the top message area instead of below the prompt
+# if st.session_state.chat_history:
+#     # Find the last assistant response
+#     messages = st.session_state.chat_history
+#     if len(messages) >= 1:
+#         last_assistant = messages[-1] if messages[-1]["role"] == "assistant" else None
+#         
+#         if last_assistant:
+#             with st.chat_message("assistant"):
+#                 # Format the assistant response to handle <think> tags
+#                 formatted_response = format_thinking_tags(last_assistant["content"])
+#                 st.markdown(formatted_response, unsafe_allow_html=True)
 
 if wrap_up_button:
     if st.session_state.chat_history:
@@ -793,11 +892,14 @@ if wrap_up_button:
             else:
                 conversation_text += f"Martin: {message['content']}\n"
         
-        # Create wrap-up prompt
+        # Create wrap-up prompt (conversation_text is internal, not displayed)
         if st.session_state.language == "fr":
-            wrap_up_prompt = f"""Basé sur notre conversation d'aujourd'hui, j'aimerais vous fournir un résumé réfléchi de notre session :
+            wrap_up_prompt = f"""Basé sur notre conversation d'aujourd'hui, j'aimerais vous fournir un résumé réfléchi de notre session.
 
+<think>
+Conversation à analyser:
 {conversation_text}
+</think>
 
 Veuillez fournir un résumé de session bienveillant et professionnel en tant que Martin, le psychologue, incluant :
 - Les thèmes clés qui ont émergé
@@ -807,9 +909,12 @@ Veuillez fournir un résumé de session bienveillant et professionnel en tant qu
 
 Parlez directement au patient à la première personne comme le ferait Martin, en maintenant le même ton thérapeutique utilisé tout au long de la session."""
         else:
-            wrap_up_prompt = f"""Based on our conversation today, I'd like to provide you with a thoughtful wrap-up of our session:
+            wrap_up_prompt = f"""Based on our conversation today, I'd like to provide you with a thoughtful wrap-up of our session.
 
+<think>
+Conversation to analyze:
 {conversation_text}
+</think>
 
 Please provide a caring, professional session summary as Martin, the psychologist, including:
 - Key themes that emerged
@@ -884,6 +989,9 @@ Vous maintenez les limites thérapeutiques tout en étant véritablement bienvei
             )
             
             assistant_response = response.choices[0].message.content
+            
+            # Format the response to remove <think> tags
+            assistant_response = format_thinking_tags(assistant_response)
             
             # Add assistant response to chat history
             st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
@@ -971,6 +1079,14 @@ Commencez chaque réponse par la compréhension et la curiosité — visez à ai
         
         assistant_response = response.choices[0].message.content
         
+        # Add welcome message for first interaction
+        if len(st.session_state.chat_history) == 2:  # First user message + first assistant response
+            welcome_msg_en = "It's wonderful to connect with you today. Before we begin, I want you to know that everything we discuss here is completely confidential and this is a safe space for you to express yourself freely. Take a deep breath, feel comfortable, and know that I'm here to listen and support you."
+            welcome_msg_fr = "C'est merveilleux de vous rencontrer aujourd'hui. Avant de commencer, je veux que vous sachiez que tout ce dont nous discutons ici est complètement confidentiel et c'est un espace sûr pour vous exprimer librement. Respirez profondément, sentez-vous à l'aise, et sachez que je suis là pour vous écouter et vous soutenir."
+            
+            welcome_message = welcome_msg_fr if st.session_state.language == "fr" else welcome_msg_en
+            assistant_response = welcome_message + "\n\n" + assistant_response
+        
         # Add assistant response to chat history
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
         
@@ -997,3 +1113,49 @@ with st.sidebar:
                 st.write(f"**{current_texts['date']}:** {entry['timestamp'][:19]}")
     else:
         st.write(current_texts["no_history"])
+
+# Add sound at the very end so it doesn't affect layout
+sound_data = get_sound_base64()
+if sound_data:
+    # Use components.html with minimal height but visible button
+    components.html(f"""
+    <div style="position: relative;">
+        <audio id="fireSound" preload="auto">
+            <source src="data:audio/mpeg;base64,{sound_data}" type="audio/mpeg">
+        </audio>
+        
+        <div id="sound-floating-btn" onclick="playFireSound()" style="position: fixed; bottom: 60px; right: 20px; background: rgba(139,0,0,0.9); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px; cursor: pointer; z-index: 9999; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.4);">
+            🔥 Sound
+        </div>
+    </div>
+    
+    <script>
+    let soundPlayed = false;
+    
+    function playFireSound() {{
+        console.log('playFireSound called');
+        const audio = document.getElementById('fireSound');
+        
+        if (audio) {{
+            audio.volume = 0.5;
+            audio.play().then(() => {{
+                console.log('Fire sound played successfully!');
+                soundPlayed = true;
+            }}).catch(e => {{
+                console.log('Sound play failed:', e);
+                // Don't show error alert, just log it
+            }});
+        }}
+    }}
+    
+    // Only play on explicit user interaction (not automatic)
+    // The button click will trigger the sound properly
+    document.addEventListener('click', function(e) {{
+        if (e.target.id === 'sound-floating-btn' || !soundPlayed) {{
+            playFireSound();
+        }}
+    }});
+    </script>
+    """, height=100)
+else:
+    st.error("❌ Sound file not found!")
