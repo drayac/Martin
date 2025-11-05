@@ -246,7 +246,11 @@ st.set_page_config(
 )
 
 # Get background image as base64
-background_image = get_base64_image("/Users/acoudray/AlitheaGenomics/r&d/app_psy_test/images/psycho_avatar4.png")
+# Use path relative to this script's location
+import os
+script_dir = os.path.dirname(os.path.abspath(__file__))
+image_path = os.path.join(script_dir, "images", "psycho_avatar4.png")
+background_image = get_base64_image(image_path)
 
 # Dark theme CSS styling with background image support
 background_css = ""
