@@ -302,21 +302,48 @@ st.markdown(f"""
             display: none !important;
         }}
         
-        /* Mobile language button adjustment - top right corner */
+        /* Mobile language button adjustment - ULTRA FORCE to top right corner */
         .language-toggle {{
             position: fixed !important;
-            top: 8px !important;
-            right: 8px !important;
-            z-index: 1000 !important;
-            background-color: rgba(255, 0, 0, 0.8) !important; /* Red background for testing */
+            top: 10px !important;
+            right: 10px !important;
+            z-index: 99999 !important;
+            background-color: rgba(255, 0, 0, 0.9) !important; /* Bright red background for testing */
+            display: block !important;
+            border: 3px solid white !important;
+            border-radius: 5px !important;
         }}
         
         .language-toggle button {{
-            font-size: 0.7rem !important;
-            padding: 0.2rem 0.5rem !important;
-            min-height: 1.8rem !important;
-            background-color: #ff4444 !important; /* Red button for visibility */
+            font-size: 0.8rem !important;
+            padding: 0.3rem 0.6rem !important;
+            min-height: 2rem !important;
+            background-color: #ff0000 !important; /* Bright red button for visibility */
             border: 2px solid #ffffff !important;
+            color: white !important;
+            display: block !important;
+            border-radius: 3px !important;
+        }}
+        
+        /* Force show language toggle on mobile with all possible selectors */
+        [data-testid="column"]:last-child .language-toggle,
+        [data-testid="column"]:last-child .language-toggle button,
+        .stButton .language-toggle,
+        div.language-toggle {{
+            position: fixed !important;
+            top: 10px !important;
+            right: 10px !important;
+            z-index: 99999 !important;
+            display: block !important;
+            visibility: visible !important;
+        }}
+        
+        /* Also target by Streamlit button structure */
+        [data-testid="column"]:last-child [data-testid="stButton"] {{
+            position: fixed !important;
+            top: 10px !important;
+            right: 10px !important;
+            z-index: 99999 !important;
         }}
         
         /* Mobile intro message */
@@ -337,15 +364,22 @@ st.markdown(f"""
             font-size: 0.9rem !important;
         }}
         
-        /* Drastically reduce spacing on mobile - almost zero */
+        /* ULTRA-compact spacing on mobile - ZERO or negative spacing */
         .mobile-spacing {{
             display: block !important;
-            margin-top: 0.1rem !important;
+            margin-top: -2rem !important;
             padding-top: 0 !important;
+            margin-bottom: -1rem !important;
         }}
         
         .mobile-spacing br {{
             display: none !important;
+        }}
+        
+        /* Ultra-compact content container on mobile */
+        .main .block-container {{
+            padding-top: 0.5rem !important;
+            margin-top: -1rem !important;
         }}
         
         /* Hide desktop spacing on mobile */
@@ -579,7 +613,7 @@ with title_col:
         """, unsafe_allow_html=True)
 
 with lang_col:
-    st.markdown('<div class="language-toggle">', unsafe_allow_html=True)
+    st.markdown('<div class="language-toggle" style="position: fixed !important; top: 10px !important; right: 10px !important; z-index: 99999 !important; background-color: red !important; padding: 5px !important; border-radius: 5px !important;">', unsafe_allow_html=True)
     if st.button(current_texts["language_button"], key="lang_toggle"):
         st.session_state.language = "fr" if st.session_state.language == "en" else "en"
         st.rerun()
