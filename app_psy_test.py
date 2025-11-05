@@ -305,15 +305,18 @@ st.markdown(f"""
         /* Mobile language button adjustment - top right corner */
         .language-toggle {{
             position: fixed !important;
-            top: 5px !important;
-            right: 5px !important;
+            top: 8px !important;
+            right: 8px !important;
             z-index: 1000 !important;
+            background-color: rgba(255, 0, 0, 0.8) !important; /* Red background for testing */
         }}
         
         .language-toggle button {{
             font-size: 0.7rem !important;
             padding: 0.2rem 0.5rem !important;
             min-height: 1.8rem !important;
+            background-color: #ff4444 !important; /* Red button for visibility */
+            border: 2px solid #ffffff !important;
         }}
         
         /* Mobile intro message */
@@ -334,14 +337,15 @@ st.markdown(f"""
             font-size: 0.9rem !important;
         }}
         
-        /* Drastically reduce spacing on mobile - reduced by half */
+        /* Drastically reduce spacing on mobile - almost zero */
         .mobile-spacing {{
             display: block !important;
-            margin-top: 0.5rem !important;
+            margin-top: 0.1rem !important;
+            padding-top: 0 !important;
         }}
         
         .mobile-spacing br {{
-            display: block !important;
+            display: none !important;
         }}
         
         /* Hide desktop spacing on mobile */
@@ -588,7 +592,6 @@ st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_htm
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="mobile-spacing">', unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 # Introductory message - positioned on the right and lower
