@@ -1,0 +1,4 @@
+# Requirements for app_psy_test
+streamlit
+groq
+dotenv
