@@ -387,7 +387,7 @@ st.markdown(f"""
             text-align: center !important;
             font-size: 1rem !important;
             padding: 0 1rem !important;
-            margin-top: -2rem !important;
+            margin-top: -1rem !important;
             margin-bottom: 0.5rem !important;
         }}
         
