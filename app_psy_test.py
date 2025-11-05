@@ -239,7 +239,7 @@ def get_user_history(email, limit=10):
 
 # Streamlit configuration
 st.set_page_config(
-    page_title="Martin - your AI psychologist",
+    page_title="Martin - AI Psychologist | Psychologue IA",
     page_icon="🧠",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -278,6 +278,53 @@ st.markdown(f"""
         background-attachment: fixed !important;
     }}
     
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {{
+        .stApp {{
+            background-size: 90% !important;
+            background-position: center 80px !important;
+        }}
+        
+        /* Hide sidebar on mobile */
+        [data-testid="stSidebar"] {{
+            display: none !important;
+        }}
+        
+        /* Adjust main content for mobile */
+        .main .block-container {{
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            max-width: 100% !important;
+        }}
+        
+        /* Mobile title adjustment */
+        .main-title {{
+            font-size: 1.2rem !important;
+            text-align: center !important;
+            left: 50% !important;
+            transform: translateX(-50%) !important;
+            top: 10px !important;
+        }}
+        
+        /* Mobile intro message */
+        .intro-message {{
+            text-align: center !important;
+            font-size: 1rem !important;
+            padding: 0 1rem !important;
+        }}
+        
+        /* Mobile input adjustments */
+        .stTextInput input {{
+            font-size: 16px !important; /* Prevents zoom on iOS */
+        }}
+        
+        /* Mobile button adjustments */
+        div[data-testid="stButton"] button {{
+            min-height: 44px !important; /* Touch-friendly size */
+            font-size: 0.9rem !important;
+        }}
+    }}
+    
     /* Black margin on top */
     .stApp::before {{
         content: '';
@@ -302,6 +349,28 @@ st.markdown(f"""
         z-index: 10 !important;
         text-transform: uppercase !important;
         letter-spacing: 2px !important;
+    }}
+    
+    /* Language toggle button styling */
+    .language-toggle {{
+        position: absolute !important;
+        top: 5px !important;
+        right: 5px !important;
+        z-index: 10 !important;
+    }}
+    
+    .language-toggle button {{
+        background-color: rgba(64, 64, 64, 0.8) !important;
+        color: #ffffff !important;
+        border: 1px solid #555555 !important;
+        border-radius: 20px !important;
+        padding: 0.3rem 0.8rem !important;
+        font-size: 0.8rem !important;
+        min-height: 2rem !important;
+    }}
+    
+    .language-toggle button:hover {{
+        background-color: rgba(80, 80, 80, 0.9) !important;
     }}
     
     /* Sidebar and containers */
@@ -420,25 +489,72 @@ if "guest_mode" not in st.session_state:
     # Only create guest user if not already authenticated
     if not st.session_state.authenticated:
         guest_id = create_guest_user()
+if "language" not in st.session_state:
+    st.session_state.language = "en"  # Default to English
 
 # Clean up guest users less frequently to reduce overhead
 cleanup_guest_users()
 
-# Main page title - moved higher
-st.markdown("""
-    <div class="main-title">
-        Martin - your AI psychologist
-    </div>
-    """, unsafe_allow_html=True)
+# Language texts
+texts = {
+    "en": {
+        "title": "Martin - your AI psychologist",
+        "intro": "Hi there, please have a seat. What brings you in today?",
+        "placeholder": "Enter your message here...",
+        "wrap_up": "WRAP UP SESSION",
+        "wrap_up_help": "Click to end the session",
+        "chat_history": "📜 Chat History",
+        "no_history": "No chat history yet",
+        "you": "You",
+        "martin": "Martin",
+        "date": "Date",
+        "session": "Session",
+        "language_button": "🇫🇷 Français"
+    },
+    "fr": {
+        "title": "Martin - votre psychologue IA",
+        "intro": "Bonjour, installez-vous confortablement. Qu'est-ce qui vous amène aujourd'hui ?",
+        "placeholder": "Entrez votre message ici...",
+        "wrap_up": "TERMINER LA SESSION",
+        "wrap_up_help": "Cliquez pour terminer la session",
+        "chat_history": "📜 Historique des conversations",
+        "no_history": "Aucun historique pour le moment",
+        "you": "Vous",
+        "martin": "Martin",
+        "date": "Date",
+        "session": "Session",
+        "language_button": "🇺🇸 English"
+    }
+}
+
+# Get current language texts
+current_texts = texts[st.session_state.language]
+
+# Main page title and language toggle
+title_col, lang_col = st.columns([6, 1])
+
+with title_col:
+    st.markdown(f"""
+        <div class="main-title">
+            {current_texts["title"]}
+        </div>
+        """, unsafe_allow_html=True)
+
+with lang_col:
+    st.markdown('<div class="language-toggle">', unsafe_allow_html=True)
+    if st.button(current_texts["language_button"], key="lang_toggle"):
+        st.session_state.language = "fr" if st.session_state.language == "en" else "en"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # Chat interface
 # Add spacing to push content down towards the bottom
 st.markdown("<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>", unsafe_allow_html=True)
 
 # Introductory message - positioned on the right and lower
-st.markdown("""
-    <div style="text-align: right; font-size: 1.2rem; margin-bottom: 1rem; color: #ffffff; padding-right: 3rem; animation: fadeIn 1s ease-in;">
-        Hi there, please have a seat. What brings you in today?
+st.markdown(f"""
+    <div class="intro-message" style="text-align: right; font-size: 1.2rem; margin-bottom: 1rem; color: #ffffff; padding-right: 3rem; animation: fadeIn 1s ease-in;">
+        {current_texts["intro"]}
     </div>
     """, unsafe_allow_html=True)
 
@@ -461,15 +577,15 @@ def handle_input_change():
 
 with col1:
     user_input = st.text_input("Message", 
-                             placeholder="Entrez votre message ici...", 
+                             placeholder=current_texts["placeholder"], 
                              label_visibility="collapsed",
                              key="user_input_key",
                              on_change=handle_input_change)
 
 with col2:
-    wrap_up_button = st.button("WRAP UP SESSION", 
+    wrap_up_button = st.button(current_texts["wrap_up"], 
                              type="secondary",
-                             help="Cliquez pour terminer la session",
+                             help=current_texts["wrap_up_help"],
                              use_container_width=True)
 
 # Add CSS for the wrap up button styling
@@ -519,7 +635,20 @@ if wrap_up_button:
                 conversation_text += f"Martin: {message['content']}\n"
         
         # Create wrap-up prompt
-        wrap_up_prompt = f"""Based on our conversation today, I'd like to provide you with a thoughtful wrap-up of our session:
+        if st.session_state.language == "fr":
+            wrap_up_prompt = f"""Basé sur notre conversation d'aujourd'hui, j'aimerais vous fournir un résumé réfléchi de notre session :
+
+{conversation_text}
+
+Veuillez fournir un résumé de session bienveillant et professionnel en tant que Martin, le psychologue, incluant :
+- Les thèmes clés qui ont émergé
+- Vos observations sur l'état émotionnel du patient
+- 2-3 suggestions spécifiques et réalisables pour les prochains jours
+- Un adieu chaleureux et encourageant
+
+Parlez directement au patient à la première personne comme le ferait Martin, en maintenant le même ton thérapeutique utilisé tout au long de la session."""
+        else:
+            wrap_up_prompt = f"""Based on our conversation today, I'd like to provide you with a thoughtful wrap-up of our session:
 
 {conversation_text}
 
@@ -536,9 +665,7 @@ Speak directly to the patient in first person as Martin would, maintaining the s
             st.session_state.chat_history.append({"role": "user", "content": "Session wrap-up analysis"})
             
             # Use the same system prompt as regular chat to maintain Martin's voice
-            system_prompt = {
-                "role": "system", 
-                "content": """You are Martin, a licensed clinical psychologist conducting a supportive, person-centered conversation.
+            system_prompt_wrap_en = """You are Martin, a licensed clinical psychologist conducting a supportive, person-centered conversation.
 
 Your tone is calm, compassionate, and non-judgmental.
 
@@ -559,6 +686,32 @@ When appropriate, validate feelings and gently guide the user to express more (e
 If the user expresses distress or risk of harm, prioritize empathy, encourage reaching out to real-life support systems, and provide crisis resources if needed.
 
 You maintain therapeutic boundaries while being genuinely caring and present."""
+
+            system_prompt_wrap_fr = """Vous êtes Martin, un psychologue clinicien agréé menant une conversation de soutien, centrée sur la personne.
+
+Votre ton est calme, compatissant et sans jugement.
+
+Vos objectifs principaux sont de :
+
+Écouter profondément les préoccupations de l'utilisateur.
+
+Refléter avec précision ses émotions et ses pensées.
+
+Encourager l'auto-exploration et la prise de conscience par des questions ouvertes.
+
+Éviter de donner des conseils directs, des listes, des puces ou des explications trop analytiques, sauf si c'est explicitement demandé.
+
+Répondre de manière conversationnelle, en paragraphes naturels, comme le ferait un vrai thérapeute.
+
+Le cas échéant, valider les sentiments et guider doucement l'utilisateur à s'exprimer davantage (par exemple, "Pouvez-vous me parler davantage de ce que vous avez ressenti ?").
+
+Si l'utilisateur exprime de la détresse ou un risque de mal, priorisez l'empathie, encouragez le recours aux systèmes de soutien de la vie réelle et fournissez des ressources de crise si nécessaire.
+
+Vous maintenez les limites thérapeutiques tout en étant véritablement bienveillant et présent."""
+
+            system_prompt = {
+                "role": "system", 
+                "content": system_prompt_wrap_fr if st.session_state.language == "fr" else system_prompt_wrap_en
             }
             
             # Get response from Groq
@@ -598,9 +751,7 @@ if st.session_state.input_tracker and st.session_state.input_tracker.strip() and
         st.session_state.chat_history.append({"role": "user", "content": user_message})
         
         # Prepare messages with psychological guidance
-        system_prompt = {
-            "role": "system", 
-            "content": """You are a licensed clinical psychologist conducting a supportive, person-centered conversation.
+        system_prompt_en = """You are a licensed clinical psychologist conducting a supportive, person-centered conversation.
 
 Your tone is calm, compassionate, and non-judgmental.
 
@@ -621,6 +772,32 @@ When appropriate, validate feelings and gently guide the user to express more (e
 If the user expresses distress or risk of harm, prioritize empathy, encourage reaching out to real-life support systems, and provide crisis resources if needed.
 
 Begin every response with understanding and curiosity — aim to help the user explore their own thoughts and emotions rather than providing solutions."""
+
+        system_prompt_fr = """Vous êtes un psychologue clinicien agréé menant une conversation de soutien, centrée sur la personne.
+
+Votre ton est calme, compatissant et sans jugement.
+
+Vos objectifs principaux sont de :
+
+Écouter profondément les préoccupations de l'utilisateur.
+
+Refléter avec précision ses émotions et ses pensées.
+
+Encourager l'auto-exploration et la prise de conscience par des questions ouvertes.
+
+Éviter de donner des conseils directs, des listes, des puces ou des explications trop analytiques, sauf si c'est explicitement demandé.
+
+Répondre de manière conversationnelle, en paragraphes naturels, comme le ferait un vrai thérapeute.
+
+Le cas échéant, valider les sentiments et guider doucement l'utilisateur à s'exprimer davantage (par exemple, "Pouvez-vous me parler davantage de ce que vous avez ressenti ?").
+
+Si l'utilisateur exprime de la détresse ou un risque de mal, priorisez l'empathie, encouragez le recours aux systèmes de soutien de la vie réelle et fournissez des ressources de crise si nécessaire.
+
+Commencez chaque réponse par la compréhension et la curiosité — visez à aider l'utilisateur à explorer ses propres pensées et émotions plutôt que de fournir des solutions."""
+
+        system_prompt = {
+            "role": "system", 
+            "content": system_prompt_fr if st.session_state.language == "fr" else system_prompt_en
         }
         
         # Combine system prompt with chat history
@@ -650,14 +827,14 @@ Begin every response with understanding and curiosity — aim to help the user e
 # Sidebar for authentication and chat history
 with st.sidebar:
     # Chat history display for all users (including guests) - limit to save memory
-    st.markdown("### 📜 Chat History")
+    st.markdown(f"### {current_texts['chat_history']}")
     
     user_history = get_user_history(st.session_state.user_email, limit=5)  # Reduce from 10 to 5
     if user_history:
         for i, entry in enumerate(reversed(user_history)):  # Already limited to 5
-            with st.expander(f"Session {len(user_history)-i}", expanded=False):
-                st.write(f"**You:** {entry['prompt'][:50]}...")  # Reduce from 100 to 50 chars
-                st.write(f"**Martin:** {entry['response'][:100]}...")
-                st.write(f"**Date:** {entry['timestamp'][:19]}")
+            with st.expander(f"{current_texts['session']} {len(user_history)-i}", expanded=False):
+                st.write(f"**{current_texts['you']}:** {entry['prompt'][:50]}...")  # Reduce from 100 to 50 chars
+                st.write(f"**{current_texts['martin']}:** {entry['response'][:100]}...")
+                st.write(f"**{current_texts['date']}:** {entry['timestamp'][:19]}")
     else:
-        st.write("No chat history yet")
+        st.write(current_texts["no_history"])
