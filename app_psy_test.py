@@ -335,6 +335,21 @@ st.markdown(f"""
     }}
     .stButton button:hover {{ background-color: #444 !important; }}
     
+    /* Form submit buttons - special styling for Wrap Up button ONLY */
+    .stForm button[type="secondary"] {{ 
+        background-color: #8B0000 !important; 
+        color: #ffffff !important; 
+        border: 1px solid #A52A2A !important; 
+        border-radius: 20px !important;
+        padding: 0.2rem 0.5rem !important;
+        font-size: 0.8rem !important;
+        min-height: 2rem !important;
+    }}
+    .stForm button[type="secondary"]:hover {{ 
+        background-color: #A52A2A !important; 
+        color: #ffffff !important;
+    }}
+    
     /* Status messages - PRESERVE their original backgrounds */
     .stSuccess {{ 
         color: var(--text-color) !important; 
@@ -427,33 +442,58 @@ st.markdown("""
     </div>
     """, unsafe_allow_html=True)
 
-# User input with form for Enter key support
-with st.form(key="chat_form", clear_on_submit=True):
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        user_input = st.text_area(
-            "",
-            height=80,
-            placeholder="Type your message here... (Press Ctrl+Enter to send)",
-            key="user_input_form"
-        )
-    with col2:
-        st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
-        send_button = st.form_submit_button("Send", type="primary")
-    
-    # Send and Clear buttons - smaller and on the side
-    col1, col2, col3 = st.columns([6, 1, 1])
-    with col1:
-        st.write("")  # Empty space
-    with col2:
-        pass  # Send button is now next to the prompt
-    with col3:
-        pass
+# User input - simple and clean approach
+# Main input row
+col1, col2 = st.columns([4, 1])
 
-# Wrap-up session button between prompt and answer
-col1, col2, col3 = st.columns([2, 1, 2])
+# Initialize input tracker in session state
+if "input_tracker" not in st.session_state:
+    st.session_state.input_tracker = ""
+if "last_processed" not in st.session_state:
+    st.session_state.last_processed = ""
+
+def handle_input_change():
+    # When input changes, trigger message processing
+    current_input = st.session_state.user_input_key
+    if current_input and current_input.strip() and current_input != st.session_state.last_processed:
+        st.session_state.input_tracker = current_input
+        st.session_state.last_processed = current_input
+
+with col1:
+    user_input = st.text_input("Message", 
+                             placeholder="Entrez votre message ici...", 
+                             label_visibility="collapsed",
+                             key="user_input_key",
+                             on_change=handle_input_change)
+
 with col2:
-    wrap_up_button = st.button("Let's wrap up today's session", type="secondary")
+    wrap_up_button = st.button("WRAP UP SESSION", 
+                             type="secondary",
+                             help="Cliquez pour terminer la session",
+                             use_container_width=True)
+
+# Add CSS for the wrap up button styling
+st.markdown("""
+    <style>
+    /* Style the wrap up button */
+    div[data-testid="stButton"] button[kind="secondary"] {
+        background-color: #404040 !important;
+        color: #ffffff !important;
+        border: 1px solid #555555 !important;
+        border-radius: 8px !important;
+        padding: 0.4rem 0.8rem !important;
+        font-size: 0.8rem !important;
+        font-weight: 500 !important;
+        min-height: 2.5rem !important;
+        width: 100% !important;
+    }
+    div[data-testid="stButton"] button[kind="secondary"]:hover {
+        background-color: #505050 !important;
+        color: #ffffff !important;
+        border: 1px solid #666666 !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 # Display only the latest conversation - immediately below the form
 if st.session_state.chat_history:
@@ -467,15 +507,6 @@ if st.session_state.chat_history:
                 # Format the assistant response to handle <think> tags
                 formatted_response = format_thinking_tags(last_assistant["content"])
                 st.markdown(formatted_response, unsafe_allow_html=True)
-
-# Clear button outside the form
-col1, col2, col3 = st.columns([6, 1, 1])
-with col3:
-    clear_button = st.button("Clear")
-
-if clear_button:
-    st.session_state.chat_history = []
-    st.rerun()
 
 if wrap_up_button:
     if st.session_state.chat_history:
@@ -554,16 +585,22 @@ You maintain therapeutic boundaries while being genuinely caring and present."""
         except Exception as e:
             st.error(f"Error: {str(e)}")
 
-if send_button:
-    if user_input.strip():
-        try:
-            # Add user message to chat history
-            st.session_state.chat_history.append({"role": "user", "content": user_input})
-            
-            # Prepare messages with psychological guidance
-            system_prompt = {
-                "role": "system", 
-                "content": """You are a licensed clinical psychologist conducting a supportive, person-centered conversation.
+# Handle user input when Enter is pressed or input changes
+if st.session_state.input_tracker and st.session_state.input_tracker.strip() and not wrap_up_button:
+    # Process the input
+    user_message = st.session_state.input_tracker
+    
+    # Clear the tracker
+    st.session_state.input_tracker = ""
+    
+    try:
+        # Add user message to chat history
+        st.session_state.chat_history.append({"role": "user", "content": user_message})
+        
+        # Prepare messages with psychological guidance
+        system_prompt = {
+            "role": "system", 
+            "content": """You are a licensed clinical psychologist conducting a supportive, person-centered conversation.
 
 Your tone is calm, compassionate, and non-judgmental.
 
@@ -584,31 +621,31 @@ When appropriate, validate feelings and gently guide the user to express more (e
 If the user expresses distress or risk of harm, prioritize empathy, encourage reaching out to real-life support systems, and provide crisis resources if needed.
 
 Begin every response with understanding and curiosity — aim to help the user explore their own thoughts and emotions rather than providing solutions."""
-            }
-            
-            # Combine system prompt with chat history
-            messages_for_api = [system_prompt] + st.session_state.chat_history
-            
-            # Get response from Groq
-            response = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                messages=messages_for_api,
-                temperature=0.7
-            )
-            
-            assistant_response = response.choices[0].message.content
-            
-            # Add assistant response to chat history
-            st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-            
-            # Save to user history for all authenticated users (including guests)
-            if st.session_state.authenticated and st.session_state.user_email:
-                save_user_prompt(st.session_state.user_email, user_input, assistant_response, "llama-3.1-8b-instant")
-            
-            st.rerun()
-            
-        except Exception as e:
-            st.error(f"Error: {str(e)}")
+        }
+        
+        # Combine system prompt with chat history
+        messages_for_api = [system_prompt] + st.session_state.chat_history
+        
+        # Get response from Groq
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            messages=messages_for_api,
+            temperature=0.7
+        )
+        
+        assistant_response = response.choices[0].message.content
+        
+        # Add assistant response to chat history
+        st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
+        
+        # Save to user history for all authenticated users (including guests)
+        if st.session_state.authenticated and st.session_state.user_email:
+            save_user_prompt(st.session_state.user_email, user_message, assistant_response, "llama-3.1-8b-instant")
+        
+        st.rerun()
+        
+    except Exception as e:
+        st.error(f"Error: {str(e)}")
 
 # Sidebar for authentication and chat history
 with st.sidebar:
