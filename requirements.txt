@@ -1,4 +1,5 @@
-# Requirements for app_psy_test
-streamlit
-groq
-dotenv
+# Updated requirements with proper dependencies for Docker deployment
+streamlit>=1.28.0
+groq>=0.4.1
+python-dotenv>=1.0.0
+requests>=2.31.0
