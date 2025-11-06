@@ -125,7 +125,7 @@ curl http://your-domain.com:8532
    ```
 3. Edit `.env` and replace `your_groq_api_key_here` with your actual API key:
    ```
-   GROQ_API_KEY=gsk_your_actual_api_key_here
+   GROQ_API_KEY=yourkey
    ```
 
 ### Custom Port
