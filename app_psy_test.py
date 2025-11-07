@@ -707,6 +707,7 @@ if st.query_params.get("lang_toggle"):
 
 # Main page title - always use current_texts['title'] for language
 import base64
+import base64
 from pathlib import Path
 phone_img_b64 = base64.b64encode(Path('images/psycho_avatar4_phone.png').read_bytes()).decode()
 st.markdown(f"""
