@@ -706,13 +706,22 @@ if st.query_params.get("lang_toggle"):
     stlib.experimental_rerun()
 
 # Main page title - always use current_texts['title'] for language
+import base64
+from pathlib import Path
+phone_img_b64 = base64.b64encode(Path('images/psycho_avatar4_phone.png').read_bytes()).decode()
 st.markdown(f"""
     <div id='fixed-top-bar' style="position:fixed;top:0;left:0;width:100vw;height:110px;background:rgba(0,0,0,0.92);color:#fff;z-index:99999;display:flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);padding-left:300px;padding-right:48px;">
         <span style="font-size:3.2rem;font-weight:100;letter-spacing:3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;text-align:left;text-transform:uppercase;">{current_texts['title']}</span>
     </div>
+    <div id="martin-phone-image" style="display:none;text-align:center;margin-top:1rem;">
+        <img src="data:image/png;base64,{phone_img_b64}" alt="Martin Avatar" style="max-width:120px;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.2);">
+    </div>
     <style>
-    body {{ padding-top: 110px !important; }}
-    .main-title {{ display: none; }}
+    @media (max-width: 768px) {{
+        #fixed-top-bar {{ display: none !important; }}
+        #martin-phone-image {{ display: block !important; }}
+        body {{ padding-top: 0 !important; }}
+    }}
     </style>
 """, unsafe_allow_html=True)
 
