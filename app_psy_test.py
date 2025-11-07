@@ -1,7 +1,9 @@
+## All dynamic margin logic removed. Layout is now default.
 import streamlit as st
 import streamlit.components.v1 as components
 import json
 import hashlib
+import math
 import datetime
 import os
 import requests
@@ -294,7 +296,7 @@ def get_sound_base64():
 # Use path relative to this script's location
 import os
 script_dir = os.path.dirname(os.path.abspath(__file__))
-image_path = os.path.join(script_dir, "images", "psycho_avatar4.png")
+image_path = os.path.join(script_dir, "images", "psycho_avatar4_expanded_vignette.jpg")
 background_image = get_base64_image(image_path)
 
 # Dark theme CSS styling with background image support
@@ -615,6 +617,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
+
 # Initialize session state with memory optimization
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
@@ -631,6 +634,13 @@ if "guest_mode" not in st.session_state:
         guest_id = create_guest_user()
 if "language" not in st.session_state:
     st.session_state.language = "en"  # Default to English
+
+# Handle language toggle from query param (best-practice)
+if st.query_params.get("lang_toggle"):
+    st.session_state.language = "fr" if st.session_state.language == "en" else "en"
+    st.query_params.clear()
+    import streamlit as stlib
+    stlib.experimental_rerun()
 
 # Clean up guest users less frequently to reduce overhead
 cleanup_guest_users()
@@ -670,30 +680,41 @@ texts = {
 # Get current language texts
 current_texts = texts[st.session_state.language]
 
-# Create language button with inline positioning - completely out of document flow
-button_text = "🇫🇷 FR" if st.session_state.language == "en" else "🇺🇸 EN"
-st.markdown(f"""
-<div style="position: fixed; top: 15px; right: 15px; z-index: 99999; background: rgba(255, 255, 255, 0.9); padding: 5px; border-radius: 8px; border: 1px solid #ccc; width: auto; height: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
-    <form action="" method="get" style="margin: 0; padding: 0;">
-        <button type="submit" name="lang_toggle" value="1" style="background: #f8f9fa; color: #333; border: 1px solid #ddd; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin: 0; transition: background-color 0.2s ease;">
-            {button_text}
-        </button>
-    </form>
-</div>
-""", unsafe_allow_html=True)
 
-# Handle language toggle from form submission
-if st.query_params.get("lang_toggle"):
+
+
+
+# Remove custom HTML for sounds and language button
+
+# Add a native Streamlit language switcher at the top left for testing
+st.markdown("<div style='height: 16px'></div>", unsafe_allow_html=True)
+lang_btn_label = "🇫🇷 Français" if st.session_state.language == "en" else "🇺🇸 English"
+if st.button(lang_btn_label, key="lang_switch", help="Switch language", use_container_width=False):
     st.session_state.language = "fr" if st.session_state.language == "en" else "en"
-    st.query_params.clear()
-    st.rerun()
+    import streamlit as stlib
+    stlib.rerun()
 
-# Main page title - should stay in original position
+
+# Handle language toggle from query param
+if st.query_params.get("lang_toggle"):
+    st.info(f"LANG TOGGLE TRIGGERED: Current language is {st.session_state.language}")
+    st.session_state.language = "fr" if st.session_state.language == "en" else "en"
+    st.info(f"LANGUAGE SET TO: {st.session_state.language}")
+    st.query_params.clear()
+    st.info("CALLING EXPERIMENTAL_RERUN")
+    import streamlit as stlib
+    stlib.experimental_rerun()
+
+# Main page title - always use current_texts['title'] for language
 st.markdown(f"""
-    <div class="main-title">
-        {current_texts["title"]}
+    <div id='fixed-top-bar' style="position:fixed;top:0;left:0;width:100vw;height:110px;background:rgba(0,0,0,0.92);color:#fff;z-index:99999;display:flex;align-items:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);padding-left:300px;padding-right:48px;">
+        <span style="font-size:3.2rem;font-weight:100;letter-spacing:3px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;text-align:left;text-transform:uppercase;">{current_texts['title']}</span>
     </div>
-    """, unsafe_allow_html=True)
+    <style>
+    body {{ padding-top: 110px !important; }}
+    .main-title {{ display: none; }}
+    </style>
+""", unsafe_allow_html=True)
 
 # Chat interface
 # Add spacing to push content down towards the bottom - MORE spacing for desktop
@@ -714,84 +735,41 @@ if st.session_state.chat_history:
             latest_martin_response = message["content"]
             break
 
-# Display either intro message or Martin's response
+## Display either intro message or Martin's response
 if latest_martin_response:
-    # Display Martin's response with greyish box
+    # No dynamic margin or custom CSS applied to the answer box
+    # Display Martin's response with greyish box and auto-scroll container
     st.markdown(f"""
-        <div class="martin-response-box" style="
-            text-align: left; 
-            font-size: 1.1rem; 
-            margin-bottom: 1rem; 
-            color: #ffffff; 
-            padding: 1rem 1.5rem; 
-            background: rgba(100, 100, 100, 0.3);
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            animation: fadeIn 1s ease-in;
-            margin: 0 1rem 1.5rem 1rem;
-            max-width: 90%;
-        ">
-            <strong>Martin:</strong> {format_thinking_tags(latest_martin_response)}
+        <div id="chat-scroll-container" style="max-height: 350px; overflow-y: auto;">
+            <div class="martin-response-box" style="
+                text-align: left; 
+                font-size: 1.1rem; 
+                margin-bottom: 1rem; 
+                color: #ffffff; 
+                padding: 1rem 1.5rem; 
+                background: rgba(100, 100, 100, 0.3);
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                backdrop-filter: blur(10px);
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                animation: fadeIn 1s ease-in;
+                margin: 0 1rem 1.5rem 1rem;
+                max-width: 90%;
+            ">
+                <strong>Martin:</strong> {format_thinking_tags(latest_martin_response)}
+            </div>
         </div>
+        <script>
+        setTimeout(function() {{
+            var chatDiv = document.getElementById('chat-scroll-container');
+            if (chatDiv) {{
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+            }}
+        }}, 100);
+        </script>
         """, unsafe_allow_html=True)
-    
-    # Add mobile-specific CSS separately to avoid f-string issues
-    st.markdown("""
-        <style>
-        @media (max-width: 768px) {
-            .martin-response-box {
-                text-align: left !important;
-                font-size: 1rem !important;
-                padding: 0.8rem 1rem !important;
-                margin: 0 0.5rem 1rem 0.5rem !important;
-                margin-top: -6rem !important;
-                position: relative !important;
-                top: -1rem !important;
-                max-width: 95% !important;
-            }
-        }
-        
-        /* EXTREME mobile compression - target everything */
-        @media (max-width: 768px) {
-            .stApp {
-                padding-top: 0 !important;
-                margin-top: -3rem !important;
-            }
-            
-            .main {
-                padding-top: 0 !important;
-                margin-top: -5rem !important;
-            }
-            
-            .main .block-container {
-                padding-top: 0 !important;
-                margin-top: -6rem !important;
-                padding-bottom: 0 !important;
-            }
-            
-            /* Target Streamlit's default spacing */
-            .stApp > div {
-                padding-top: 0 !important;
-                margin-top: -2rem !important;
-            }
-            
-            /* Remove all default margins on mobile */
-            div[data-testid="stVerticalBlock"] {
-                gap: 0 !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            /* Bring prompt closer to message */
-            .stTextInput {
-                margin-top: -1rem !important;
-                padding-top: 0 !important;
-            }
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    ## (Reverted) No custom CSS for margin or spacing adjustments
+    ## The layout is now restored to its original state before margin changes
 else:
     # Display intro message
     st.markdown(f"""
@@ -819,31 +797,20 @@ else:
 # Main input row
 col1, col2 = st.columns([4, 1])
 
-# Initialize input tracker in session state
-if "input_tracker" not in st.session_state:
-    st.session_state.input_tracker = ""
-if "last_processed" not in st.session_state:
-    st.session_state.last_processed = ""
 
-def handle_input_change():
-    # When input changes, trigger message processing
-    current_input = st.session_state.user_input_key
-    if current_input and current_input.strip() and current_input != st.session_state.last_processed:
-        st.session_state.input_tracker = current_input
-        st.session_state.last_processed = current_input
+# Remove custom input tracker logic
 
+
+# Fixed bottom bar for chat input and wrap_up button
+
+# Actual Streamlit input logic (placed visually by the fixed bar above)
+# Restore original input row
+
+col1, col2 = st.columns([4, 1])
 with col1:
-    user_input = st.text_input("Message", 
-                             placeholder=current_texts["placeholder"], 
-                             label_visibility="collapsed",
-                             key="user_input_key",
-                             on_change=handle_input_change)
-
+    user_message = st.chat_input(current_texts["placeholder"], key="chat_input_key")
 with col2:
-    wrap_up_button = st.button(current_texts["wrap_up"], 
-                             type="secondary",
-                             help=current_texts["wrap_up_help"],
-                             use_container_width=True)
+    wrap_up_button = st.button(current_texts["wrap_up"], type="secondary", help=current_texts["wrap_up_help"], use_container_width=True)
 
 # Add CSS for the wrap up button styling
 st.markdown("""
@@ -1005,18 +972,12 @@ Vous maintenez les limites thérapeutiques tout en étant véritablement bienvei
         except Exception as e:
             st.error(f"Error: {str(e)}")
 
-# Handle user input when Enter is pressed or input changes
-if st.session_state.input_tracker and st.session_state.input_tracker.strip() and not wrap_up_button:
-    # Process the input
-    user_message = st.session_state.input_tracker
-    
-    # Clear the tracker
-    st.session_state.input_tracker = ""
-    
+
+# Handle user input from chat_input directly
+if user_message and user_message.strip() and not wrap_up_button:
     try:
         # Add user message to chat history
         st.session_state.chat_history.append({"role": "user", "content": user_message})
-        
         # Prepare messages with psychological guidance
         system_prompt_en = """You are a licensed clinical psychologist conducting a supportive, person-centered conversation.
 
@@ -1066,36 +1027,27 @@ Commencez chaque réponse par la compréhension et la curiosité — visez à ai
             "role": "system", 
             "content": system_prompt_fr if st.session_state.language == "fr" else system_prompt_en
         }
-        
         # Combine system prompt with chat history
         messages_for_api = [system_prompt] + st.session_state.chat_history
-        
         # Get response from Groq
         response = client.chat.completions.create(
             model="llama-3.1-8b-instant",
             messages=messages_for_api,
             temperature=0.7
         )
-        
         assistant_response = response.choices[0].message.content
-        
         # Add welcome message for first interaction
         if len(st.session_state.chat_history) == 2:  # First user message + first assistant response
             welcome_msg_en = "It's wonderful to connect with you today. Before we begin, I want you to know that everything we discuss here is completely confidential and this is a safe space for you to express yourself freely. Take a deep breath, feel comfortable, and know that I'm here to listen and support you."
             welcome_msg_fr = "C'est merveilleux de vous rencontrer aujourd'hui. Avant de commencer, je veux que vous sachiez que tout ce dont nous discutons ici est complètement confidentiel et c'est un espace sûr pour vous exprimer librement. Respirez profondément, sentez-vous à l'aise, et sachez que je suis là pour vous écouter et vous soutenir."
-            
             welcome_message = welcome_msg_fr if st.session_state.language == "fr" else welcome_msg_en
             assistant_response = welcome_message + "\n\n" + assistant_response
-        
         # Add assistant response to chat history
         st.session_state.chat_history.append({"role": "assistant", "content": assistant_response})
-        
         # Save to user history for all authenticated users (including guests)
         if st.session_state.authenticated and st.session_state.user_email:
             save_user_prompt(st.session_state.user_email, user_message, assistant_response, "llama-3.1-8b-instant")
-        
         st.rerun()
-        
     except Exception as e:
         st.error(f"Error: {str(e)}")
 
@@ -1114,48 +1066,5 @@ with st.sidebar:
     else:
         st.write(current_texts["no_history"])
 
-# Add sound at the very end so it doesn't affect layout
-sound_data = get_sound_base64()
-if sound_data:
-    # Use components.html with minimal height but visible button
-    components.html(f"""
-    <div style="position: relative;">
-        <audio id="fireSound" preload="auto">
-            <source src="data:audio/mpeg;base64,{sound_data}" type="audio/mpeg">
-        </audio>
-        
-        <div id="sound-floating-btn" onclick="playFireSound()" style="position: fixed; bottom: 60px; right: 20px; background: rgba(139,0,0,0.9); border: 2px solid rgba(255,255,255,0.3); color: white; padding: 8px 15px; border-radius: 20px; font-size: 14px; cursor: pointer; z-index: 9999; font-weight: bold; box-shadow: 0 4px 8px rgba(0,0,0,0.4);">
-            🔥 Sound
-        </div>
-    </div>
-    
-    <script>
-    let soundPlayed = false;
-    
-    function playFireSound() {{
-        console.log('playFireSound called');
-        const audio = document.getElementById('fireSound');
-        
-        if (audio) {{
-            audio.volume = 0.5;
-            audio.play().then(() => {{
-                console.log('Fire sound played successfully!');
-                soundPlayed = true;
-            }}).catch(e => {{
-                console.log('Sound play failed:', e);
-                // Don't show error alert, just log it
-            }});
-        }}
-    }}
-    
-    // Only play on explicit user interaction (not automatic)
-    // The button click will trigger the sound properly
-    document.addEventListener('click', function(e) {{
-        if (e.target.id === 'sound-floating-btn' || !soundPlayed) {{
-            playFireSound();
-        }}
-    }});
-    </script>
-    """, height=100)
-else:
-    st.error("❌ Sound file not found!")
+
+# Remove separate sound button/audio injection at the end
